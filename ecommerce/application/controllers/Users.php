@@ -5,103 +5,112 @@ class Users extends CI_Controller
 {
 	public function index()
 	{
-		$data = array(
-			'errors' => $this->session->flashdata('errors'),
-			'message' => $this->session->flashdata('message')
-		);
-		$this->load->view('form', $data);
+		$current_user_id = $this->session->userdata('user_id');
+		if (!$current_user_id) {
+			$this->load->view('partials/header');
+			$this->load->view('users/login');
+		} else if ($this->User->is_admin($current_user_id)) {
+			redirect("/dashboard");
+		} else {
+			redirect("/products");
+		}
 	}
 
-	public function add()
+	public function register()
 	{
-		$rules = array(
-			array(
-				'field' => 'first_name',
-				'label' => 'First Name',
-				'rules' => 'trim|required|min_length[2]|alpha'
-			), array(
-				'field' => 'last_name',
-				'label' => 'Last Name',
-				'rules' => 'trim|required|min_length[2]|alpha'
-			), array(
-				'field' => 'contact_number',
-				'label' => 'Contact Number',
-				'rules' => 'trim|required|numeric|min_length[11]|is_unique[users.contact_number]'
-			), array(
-				'field' => 'email',
-				'label' => 'Email',
-				'rules' => 'trim|required|valid_email|is_unique[users.email]'
-			), array(
-				'field' => 'password',
-				'label' => 'Password',
-				'rules' => 'trim|required|min_length[8]'
-			),
-			// array(
-			// 	'folder' => 'repeat_password',
-			// 	'label' => 'Repeat Password',
-			// 	'rules' => 'required|matches[password]'
-			// )
-		);
-		$this->form_validation->set_rules($rules);
-		$this->form_validation->set_rules('repeat_password', 'Repeat Password', 'trim|required|matches[password]');
+		$this->load->view('partials/header');
+		$this->load->view('users/register');
+	}
 
-		if ($this->form_validation->run() == FALSE) {
-			$this->session->set_flashdata('errors', validation_errors());
-		} else {
-			$user = $this->input->post();
-			$this->load->model("User");
-			$user['salt'] = bin2hex(openssl_random_pseudo_bytes(22));
-			$user['encrypted_password'] = md5($user['password'] . '' . $user['salt']);
-			$result = $this->User->add_user($user);
-			if ($result == true) {
-				$this->session->set_flashdata('message', 'User successfully created!');
-			} else {
-				$this->session->set_flashdata('message', 'User creation failed!');
-			}
-		}
-		redirect('/');
+	public function admin()
+	{
+		$this->load->view('partials/header');
+		$this->load->view('users/admin');
 	}
 
 	public function login()
 	{
-		$rules = array(
-			array(
-				'field' => 'user_identifaction',
-				'label' => 'Contact Number or Email',
-				'rules' => 'trim|required'
-			), array(
-				'field' => 'password',
-				'label' => 'Password',
-				'rules' => 'trim|required|min_length[8]'
-			)
-		);
-		$this->form_validation->set_rules($rules);
-		if ($this->form_validation->run() == FALSE) {
-			$this->session->set_flashdata('errors', validation_errors());
-			redirect('/');
-		} else {
-			$userInputCredentials = $this->input->post();
-			$this->load->model("User");
-			if (filter_var($userInputCredentials['user_identifaction'], FILTER_VALIDATE_EMAIL)) {
-				$userDBCredentials = $this->User->get_user_by_email($userInputCredentials['user_identifaction']);
-			} else if (is_numeric($userInputCredentials['user_identifaction'])) {
-				$userDBCredentials = $this->User->get_user_by_contact_number($userInputCredentials['user_identifaction']);
-			} 
-			if ($userDBCredentials == false) {
-				$this->session->set_flashdata('errors', 'Contact number or Email does not exist!');
-				$this->User->update_failed_login_at($userDBCredentials['id']);
-				redirect('/');
+		$user = $this->input->post();
+		$validateUser = $this->User->validateLogin($user);
+		if ($validateUser == 'valid') {
+			$userInDB = $this->User->get_user_by_email($user['email']);
+			if ($userInDB == false) {
+				$this->session->set_flashdata('errors', 'Email does not exist!');
 			} else {
-				$input_encrypted_password = md5($userInputCredentials['password'] . '' . $userDBCredentials['salt']);
-				if ($userDBCredentials['password'] != $input_encrypted_password) {
+				$input_encrypted_password = md5($user['password'] . '' . $userInDB['salt']);
+				if ($userInDB['password'] != $input_encrypted_password) {
 					$this->session->set_flashdata('errors', 'Invalid password!');
-					$this->User->update_failed_login_at($userDBCredentials['id']);
-					redirect('/');
+				} else {
+					if ($this->User->is_admin($userInDB['id'])) {
+						$this->session->set_userdata('role', 1);
+					}
+					$this->session->set_userdata('user_id', $userInDB['id']);
+				}
+			}
+		} else {
+			$this->session->set_flashdata('errors', $validateUser);
+		}
+		redirect('/');
+	}
+
+	public function store()
+	{
+		$user = $this->input->post();
+		$validateUser = $this->User->validateRegistration($user);
+		if ($validateUser == 'valid') {
+			$user['salt'] = bin2hex(openssl_random_pseudo_bytes(22));
+			$user['encrypted_password'] = md5($user['password'] . '' . $user['salt']);
+			$storeUser = $this->User->store($user);
+			if ($storeUser == true) {
+				$this->session->set_flashdata('message', 'User successfully created!');
+			} else {
+				$this->session->set_flashdata('message', 'User creation failed!');
+			}
+		} else {
+			$this->session->set_flashdata('errors', $validateUser);
+		}
+		redirect('/register');
+	}
+
+	public function edit()
+	{
+		$current_user_id = $this->session->userdata('user_id');
+		$this->load->view('users/edit', array('user_id' => $current_user_id));
+	}
+
+	public function update_info()
+	{
+		$user = $this->input->post();
+		$result = $this->User->update_info($user);
+		if ($result) {
+			$this->session->set_flashdata('message', 'Information successfully updated!');
+		} else {
+			$this->session->set_flashdata('message', 'User update failed!');
+		}
+		redirect('/edit');
+	}
+
+	public function update_password()
+	{
+		$user = $this->input->post();
+		$userInDB = $this->User->get_user_by_id($user['id']);
+		$input_encrypted_old_password = md5($user['old_password'] . '' . $userInDB['salt']);
+		if ($userInDB['password'] != $input_encrypted_old_password) {
+			$this->session->set_flashdata('errors', 'Invalid password!');
+		} else {
+			if ($user['new_password'] != $user['confirm_password']) {
+				$this->session->set_flashdata('errors', 'Passwords does not match!');
+			} else {
+				$user['encrypted_password'] = md5($user['confirm_password'] . '' . $userInDB['salt']);
+				$storeUser = $this->User->update_password($user);
+				if ($storeUser) {
+					$this->session->set_flashdata('message', 'Password successfully updated!');
+				} else {
+					$this->session->set_flashdata('message', 'Password update failed!');
 				}
 			}
 		}
-		$this->session->set_userdata('user_id', $userDBCredentials['id']);
-		redirect('/users/profile');
+		redirect('/edit');
 	}
 
 	public function profile()
@@ -120,6 +129,7 @@ class Users extends CI_Controller
 
 	public function logout()
 	{
+		$this->session->unset_userdata('role');
 		$this->session->unset_userdata('user_id');
 		redirect('/');
 	}

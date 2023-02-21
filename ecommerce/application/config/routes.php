@@ -5,11 +5,14 @@ $route['default_controller'] = 'users';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
 
-$route['users'] = 'users';
-$route['users/add'] = 'users/add';
-$route['users/login'] = 'users/login';
-$route['users/profile'] = 'users/profile';
+// Users
+$route['login'] = 'users/login';
+$route['register'] = 'users/register';
+$route['admin'] = 'users/admin';
 
+
+// Dashboard
+$route['dashboard'] = 'dashboards';
 
 
 
