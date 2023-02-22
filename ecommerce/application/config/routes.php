@@ -10,9 +10,24 @@ $route['login'] = 'users/login';
 $route['register'] = 'users/register';
 $route['admin'] = 'users/admin';
 
+// Products
+$route['products'] = 'products';
+$route['products/category/(:any)/(:any)'] = 'products/filter_category/$1/$2';
+$route['products/search_and_sort'] = 'products/search_and_sort';
+$route['products/show/(:any)'] = 'products/show/$1';
+$route['products/buy'] = 'products/buy';
+
+// Carts
+$route['carts'] = 'carts';
 
 // Dashboard
 $route['dashboard'] = 'dashboards';
+$route['dashboard/orders'] = 'dashboards/orders';
+$route['dashboard/products'] = 'dashboards/products';
+$route['dashboard/products/search'] = 'dashboards/search';
+$route['dashboard/products/add'] = 'dashboards/add';
+$route['dashboard/products/delete/(:any)'] = 'dashboards/delete/$1';
+
 
 
 

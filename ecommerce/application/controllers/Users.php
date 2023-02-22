@@ -10,7 +10,7 @@ class Users extends CI_Controller
 			$this->load->view('partials/header');
 			$this->load->view('users/login');
 		} else if ($this->User->is_admin($current_user_id)) {
-			redirect("/dashboard");
+			redirect("/dashboard/orders");
 		} else {
 			redirect("/products");
 		}
