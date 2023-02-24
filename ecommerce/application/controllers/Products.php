@@ -76,6 +76,7 @@ class Products extends CI_Controller
 		$this->session->set_flashdata('message', "Added to cart");
 	}
 
+
 	public function cart() {
 		$view_data = array(
 			'items' => $this->Cart->get_by_user_id($this->session->userdata('user_id'))

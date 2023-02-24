@@ -50,6 +50,13 @@ class Product extends CI_Model
         return $this->db->query($query, $values);
     }
 
+    public function sold($product_id, $quantity) {
+        $product = $this->get_by_id($product_id);
+		$query = "UPDATE products SET stock = ?, sold = ? WHERE id = ?";
+		$values = array($product['stock'] - $quantity, $product['sold'] + $quantity, $product_id);
+		return $this->db->query($query, $values);
+	}
+
     function validate()
     {
     }

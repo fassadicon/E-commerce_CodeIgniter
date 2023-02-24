@@ -19,10 +19,20 @@ $route['products/buy'] = 'products/buy';
 
 // Carts
 $route['carts'] = 'carts';
+$route['carts/cart_items'] = 'carts/cart_items';
+$route['carts/remove_in_cart/(:any)'] = 'carts/remove_in_cart/$1';
+
+$route['stripe/payment'] = 'stripe/payment';
+
+// Orders
+$route['orders/add'] = 'orders/store';
+$route['orders/show'] = 'orders/show';
+$route['orders/update_status'] = 'orders/update_status';
 
 // Dashboard
 $route['dashboard'] = 'dashboards';
 $route['dashboard/orders'] = 'dashboards/orders';
+$route['dashboard/orders/search'] = 'dashboards/order_search';
 $route['dashboard/products'] = 'dashboards/products';
 $route['dashboard/products/search'] = 'dashboards/search';
 $route['dashboard/products/add'] = 'dashboards/add';

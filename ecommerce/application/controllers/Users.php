@@ -12,7 +12,7 @@ class Users extends CI_Controller
 		} else if ($this->User->is_admin($current_user_id)) {
 			redirect("/dashboard/orders");
 		} else {
-			redirect("/products");
+			redirect("/products/category/1/1");
 		}
 	}
 

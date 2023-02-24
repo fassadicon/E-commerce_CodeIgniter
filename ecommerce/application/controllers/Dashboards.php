@@ -15,8 +15,20 @@ class Dashboards extends CI_Controller
 			'title' => 'Dashboard Orders',
 			'selected' => 'orders'
 		);
+		$view_data = array(
+			'orders' => $this->Order->get_all()
+		);
 		$this->load->view('partials/header', $data);
-		$this->load->view('dashboard/orders');
+		$this->load->view('dashboard/orders', $view_data);
+	}
+
+	public function order_search()
+	{
+		$name = $this->input->post();
+		$view_data = array(
+			'orders' => $this->Order->get_by_name($name)
+		);
+		$this->load->view('partials/dashboard_orders_table', $view_data);
 	}
 
 	public function products()
